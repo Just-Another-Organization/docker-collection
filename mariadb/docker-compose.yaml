@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  gestionale-db:
+    image: mariadb
+    restart: always
+    volumes:
+      - ./local_folder:/var/lib/mysql/
+      - ./mysql_local.cnf:/etc/mysql/conf.d/mysql_local.cnf:ro
+    env_file:
+      - .env
+    ports:
+      - '${PORT}:3306'
