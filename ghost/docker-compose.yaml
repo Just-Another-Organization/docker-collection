@@ -1,0 +1,32 @@
+version: '3'
+services:
+
+  ghost-site:
+    image: ghost:4-alpine
+    restart: unless-stopped
+    ports:
+      - "${PORT}:2368"
+    depends_on:
+      - ghost-db
+    environment:
+      url: "${URL}"
+      database__client: mysql
+      database__connection__host: ghost-db
+      database__connection__user: "${DATABASE_USER}"
+      database__connection__password: "${DATABASE_PASSWORD}"
+      database__connection__database: "${DATABASE_NAME}"
+    volumes:
+      - ./ghost/content:/var/lib/ghost/content
+
+  ghost-db:
+    image: mariadb:latest
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DATABASE_ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${DATABASE_NAME}"
+      MYSQL_USER: "${DATABASE_USER}"
+      MYSQL_PASSWORD: "${DATABASE_PASSWORD}"
+    volumes:
+      - ./database/mysql:/var/lib/mysql
+      - ./database/log:/var/log/mysql

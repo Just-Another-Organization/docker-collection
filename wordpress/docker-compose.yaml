@@ -1,0 +1,24 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:latest
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+    env_file: .env
+
+  wordpress:
+    depends_on:
+      - mysql
+    image: wordpress:latest
+    volumes:
+      - wordpress_data:/var/www/html
+    ports:
+      - "${PORT}:80"
+    restart: always
+    env_file: .env
+
+volumes:
+  db_data: { }
+  wordpress_data: { }
