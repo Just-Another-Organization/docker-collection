@@ -1,0 +1,60 @@
+version: "3"
+
+services:
+  mariadb:
+    image: mariadb:10
+    container_name: mariadb
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./db-data:/var/lib/mysql
+    networks:
+      - internal
+
+  drupal:
+    image: drupal:10.0.0-rc1-fpm-alpine
+    container_name: drupal
+    depends_on:
+      - mariadb
+    restart: unless-stopped
+    networks:
+      - internal
+      - external
+    volumes:
+      - ./drupal-data:/var/www/html
+
+  webserver:
+    image: nginx:1.23-alpine
+    container_name: webserver
+    depends_on:
+      - drupal
+    restart: unless-stopped
+    ports:
+      - "$PORT80:80"
+      - "$SSL_PORT:443"
+    volumes:
+      - ./drupal-data:/var/www/html
+      - ./nginx-conf:/etc/nginx/conf.d
+      - ./certbot-etc:/etc/letsencrypt
+    networks:
+      - external
+
+  certbot:
+    depends_on:
+      - webserver
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - drupal-data:/var/www/html
+    command: >
+      certonly --webroot --webroot-path=/var/www/html --email "$SSL_EMAIL"
+      --agree-tos --no-eff-email --force-renewal
+      -d "$SSL_DOMAIN" -d www."$SSL_DOMAIN"
+
+networks:
+  external:
+    driver: bridge
+  internal:
+    driver: bridge

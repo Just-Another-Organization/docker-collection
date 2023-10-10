@@ -1,0 +1,33 @@
+version: "3"
+
+services:
+  mariadb:
+    image: mariadb:10
+    container_name: mariadb
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./db-data:/var/lib/mysql
+    networks:
+      - internal
+
+  drupal:
+    image: drupal:rc-apache-buster
+    container_name: drupal
+    depends_on:
+      - mariadb
+    restart: unless-stopped
+    ports:
+      - "$PORT:80"
+    networks:
+      - internal
+      - external
+    volumes:
+      - ./drupal-data:/var/www/html
+
+networks:
+  external:
+    driver: bridge
+  internal:
+    driver: bridge
